@@ -45,32 +45,22 @@
 42.  project points to image
 43.  remove image when new frame is loading
 44.  improve performance of coloring object points.
-45.  find box points and extreme dimension shall be seperated
+45.  find box points and extreme shall be seperated
 46.  change box may cause camera switching.
 47.  initial z positin shall be configurable, or when a new box is created, the z position/scale shall be computed. 
 48.  height shall be infinity at init.
 49.  0324,458, 27,48,-2. box dimension incorrect.
-50.  ~~zoom in/out in sub-sideview.~~
+50.  zoom in/out in sub-sideview.
 51.  keep pointer type when draging in subviews.
 52.  reset button, reset dimension not rotation. obj_cfg shall be the default size of object.
 53.  hide context photo if image not available.
 54.  should enlarge prototype dimension when creating new box.
-55.  ~~add grid on screen, help rotating mainview.~~
-56.  ~~boundary-aware rotation support on mainview.~~
-57.  try auto-adjust x,y rotation by minimizing projection area.
-58.  use sideview to decide object lower border.
-59.  'escape' when drawing a rectangle
-60.  use one-shot video object segmentation to assist image segmentation annotating
-61.  keydown on object labels, should be forwarded to main-container.
-62.  objs of scene shoulb be loaded only once when preloading all frames of scene.
-63.  focused image context: make its aspect ratio  to 1:1
-64.  show trajectory of one object
-65.  reload objects w/o tracking id.
-66.  linear interpolation: auto adjust is also helpful
-67.  save modified anns only, in batch mode
-68.  enable adding a tag to each label. issue #
-69.  ctrl+move to automatically resize/rotate, shift+move to automatically rotate (only)
-70.  the transformation subnetwork in pointnet for our rotation prediction is possibly unnecessary because we don't want a rotation-invariant model.
-71.  add contextmenu for projective sub-views, so that we can use them in batch-mode
-72.  crop point clouds, so to remove points of trees reaching out above the roads
-73.  http://eprints.utar.edu.my/4212/1/1604655_FYP_Report_-_SHI_HAO_TAN.pdf
+54.  ~~add grid on screen, help rotating mainview.~~
+55.  ~~boundary-aware rotation support on mainview.~~
+56.  try auto-adjust x,y rotation by minimizing projection area.
+57.  use sideview to decide object lower border.
+58.  'escape' when drawing a rectangle
+59.  use one-shot video object segmentation to assist image segmentation annotating
+
+
+

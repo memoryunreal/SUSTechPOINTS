@@ -1,173 +1,73 @@
 
+import {psr_to_xyz} from "./util.js"
+import {data} from "./data.js"
+import {load_obj_ids_of_scene} from "./obj_id_list.js"
+import {header} from "./header.js"
 
+function save_annotation(done){
+    var bbox_annotations=[];
+    console.log(data.world.boxes.length, "boxes");
+    data.world.boxes.forEach(function(b){
+        //var vertices = psr_to_xyz(b.position, b.scale, b.rotation);
 
-import { Editor } from "./editor.js";
-import {logger} from "./log.js"
-
-
-
-
-function reloadWorldList(worldList, done){
-    var xhr = new XMLHttpRequest();
-        // we defined the xhr
-    xhr.onreadystatechange = function () {
-        if (this.readyState != 4) return;
-    
-        if (this.status == 200) {
-            let anns = JSON.parse(this.responseText);
-        
-            // load annotations
-            anns.forEach(a=>{
-                let world = worldList.find(w=>{
-                    return (w.frameInfo.scene == a.scene && 
-                            w.frameInfo.frame == a.frame);
-                    });
-                if (world){
-                    world.annotation.reapplyAnnotation(a.annotation);
-                }
-                else{
-                    console.error("bug?");
-                }
-                
-            });
-
-            if (done)
-                done();
-        }
-    };
-    
-    xhr.open('POST', "/loadworldlist", true);
-
-    let para = worldList.map(w=>{
-        return {
-            //todo: we could add an id, so as to associate world easily
-            scene: w.frameInfo.scene, 
-            frame: w.frameInfo.frame,
+        var b = {
+            psr: {
+                position:b.position,
+                scale:b.scale,
+                rotation:{
+                    x:b.rotation.x,
+                    y:b.rotation.y,
+                    z:b.rotation.z,
+                },
+            },
+            
+            /*
+            position:b.position,
+            scale:b.scale,
+            rotation:{
+                x:b.rotation.x,
+                y:b.rotation.y,
+                z:b.rotation.z,
+            },
+            */
+           
+            obj_type: b.obj_type,
+            obj_id: b.obj_track_id,
+            //vertices: vertices,
         };
+
+        bbox_annotations.push(b);
+        
     });
 
-    xhr.send(JSON.stringify(para));
-}
-
-
-var saveDelayTimer = null;
-var pendingSaveList = [];
-
-function saveWorldList(worldList){
-
-    pendingSaveList = pendingSaveList.concat(worldList);
-
-    if (saveDelayTimer)
-    {
-        clearTimeout(saveDelayTimer);
-    }
-    
-    saveDelayTimer = setTimeout(()=>{
-            
-        logger.log("save delay expired.");
-
-        doSaveWorldList(pendingSaveList, ()=>{editor.header.updateModifiedStatus()});
-
-        //reset
-
-        saveDelayTimer = null;
-        pendingSaveList = [];
-    }, 
-
-    500);
-}
-
-
-function doSaveWorldList(worldList, done)
-{
-    if (worldList.length>0){
-        if (worldList[0].data.cfg.disableLabels){
-            console.log("labels not loaded, save action is prohibitted.")
-            return;
-        }
-    }
-
-
-    console.log(worldList.length, "frames");
-    let ann = worldList.map(w=>{
-        return {
-            scene: w.frameInfo.scene,
-            frame: w.frameInfo.frame,
-            annotation: w.annotation.toBoxAnnotations(),
-        };
-    })
-
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/saveworldlist", true);
+    xhr.open("POST", "/save" +"?scene="+data.world.file_info.scene+"&frame="+data.world.file_info.frame, true);
     xhr.setRequestHeader('Content-Type', 'application/json');
 
     xhr.onreadystatechange = function () {
         if (this.readyState != 4) return;
     
         if (this.status == 200) {
-            
-            worldList.forEach(w=>{
-                w.annotation.resetModified();
-            })
-
-            logger.log(`saved: ${worldList[0].frameInfo.scene}: ${worldList.reduce((a,b)=>a+" "+b.frameInfo.frame, "")}`);
-
+            console.log("save annotation finished.");
             if(done){
                 done();
             }
+
+            //reload obj-ids of the scene
+            load_obj_ids_of_scene(data.world.file_info.scene);
         }
-        else{
-            window.editor.infoBox.show("Error", `save failed, status : ${this.status}`);
-        }
-        
     
         // end of state change: it can be after some time (async)
     };
 
-    var b = JSON.stringify(ann);
+    var b = JSON.stringify(bbox_annotations);
     //console.log(b);
     xhr.send(b);
+
+    // unmark changed flag
+    //document.getElementById("frame").innerHTML = data.world.file_info.scene+"/"+data.world.file_info.frame;
+    header.unmark_changed_flag();
 }
 
-// function saveWorld(world, done){
-//     if (world.data.cfg.disableLabels){
-//         logger.log("labels not loaded, save action is prohibitted.")
-//         return;
-//     }
 
-//     console.log(world.annotation.boxes.length, "boxes");
-//     let bbox_annotations = world.annotation.toBoxAnnotations();
-
-//     var xhr = new XMLHttpRequest();
-//     xhr.open("POST", "/saveworld" +"?scene="+world.frameInfo.scene+"&frame="+world.frameInfo.frame, true);
-//     xhr.setRequestHeader('Content-Type', 'application/json');
-
-//     xhr.onreadystatechange = function () {
-//         if (this.readyState != 4) return;
-    
-//         if (this.status == 200) {
-//             logger.log(`saved: ${world}`);
-//             world.annotation.resetModified();
-
-//             //reload obj-ids of the scene
-//             //todo: this shall be moved to done
-//             //load_obj_ids_of_scene(world.frameInfo.scene);
-
-//             if(done){
-//                 done();
-//             }
-
-            
-            
-//         }
-    
-//         // end of state change: it can be after some time (async)
-//     };
-
-//     var b = JSON.stringify(bbox_annotations);
-//     //console.log(b);
-//     xhr.send(b);
-// }
-
-
-export {saveWorldList, reloadWorldList}
+export {save_annotation}

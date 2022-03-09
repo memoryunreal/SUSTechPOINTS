@@ -32,171 +32,85 @@
 # ]
 
 
-#
-# rotation_y_kitti = - ( psr.rotation.z + pi/2)
-#
-#  http://www.cvlibs.net/datasets/kitti/setup.php
-#
-# camera coordinates:  x  goes right, y goes down, z goes forward.
-# note x-y place has the same direction as a image.
-#
-
 import os
 import json
 import math
 import numpy as np
-import sys
+
+label_path = './data/kitti/label_2'
+my_label_path = './data/kitti/label'
+calib_path = "./data/kitti/calib_2"
+
+#label_path = '/home/lie/disk640/data/kitti/label_2'
+#my_label_path = '/home/lie/disk640/data/kitti/sustechpoints_label'
+#calib_path = "/home/lie/disk640/data/kitti/data_object_calib/training/calib"
+#pc_path="/home/lie/disk640/data/kitti/velodyne"
 
 
-
-def get_inv_matrix(file, v2c, rect):
-    with open(file) as f:
+def get_inv_matrix(frame):
+    with open(os.path.join(calib_path, frame+".txt")) as f:
         lines = f.readlines()
-        trans = [x for x in filter(lambda s: s.startswith(v2c), lines)][0]
-        
-        matrix = [m for m in map(lambda x: float(x), trans.strip().split(" ")[1:])]
+        trans = [x for x in filter(lambda s: s.startswith("Tr_velo_to_cam"), lines)][0]
+        matrix = [m for m in map(lambda x: float(x), trans.split(" ")[1:])]
         matrix = matrix + [0,0,0,1]
         m = np.array(matrix)
         velo_to_cam  = m.reshape([4,4])
 
 
-        trans = [x for x in filter(lambda s: s.startswith(rect), lines)][0]
-        matrix = [m for m in map(lambda x: float(x), trans.strip().split(" ")[1:])]        
+        trans = [x for x in filter(lambda s: s.startswith("R0_rect"), lines)][0]
+        matrix = [m for m in map(lambda x: float(x), trans.split(" ")[1:])]        
         m = np.array(matrix).reshape(3,3)
         
         m = np.concatenate((m, np.expand_dims(np.zeros(3), 1)), axis=1)
         
         rect = np.concatenate((m, np.expand_dims(np.array([0,0,0,1]), 0)), axis=0)        
         
-        print(velo_to_cam, rect)    
+        
         m = np.matmul(rect, velo_to_cam)
 
-
+        
         m = np.linalg.inv(m)
         
         return m
-def get_detection_inv_matrix(calib_path, frame):
-    file = os.path.join(calib_path, frame+".txt")
-    return get_inv_matrix(file, "Tr_velo_to_cam", "R0_rect")
 
 
+files = os.listdir(label_path)
+files.sort()
 
-def get_tracking_inv_matrix(calib_path):
-    return get_inv_matrix(calib_path, "Tr_velo_cam", "R_rect")
+#files = [files[2], files[10]]
+for fname in files:
+    frame, _ = os.path.splitext(fname)
+    print(frame)
 
-
-def parse_one_detection_obj(inv_matrix, l):
-    words = l.strip().split(" ")
-    obj = {}
-
-    pos = np.array([float(words[11]), float(words[12]), float(words[13]), 1]).T
-    trans_pos = np.matmul(inv_matrix, pos)
-    #print(trans_pos)
-
-    obj["obj_type"] = words[0]
-    obj["psr"] = {"scale": 
-                {"z":float(words[8]),    #height
-                    "x":float(words[10]),  #length
-                    "y":float(words[9])},  #width
-                    "position": {"x":trans_pos[0], "y":trans_pos[1], "z":trans_pos[2]+float(words[8])/2},
-                    "rotation": {"x":0, 
-                                "y":0,
-                                #"z": +math.pi/2 +float(words[14])}}
-                                "z": -math.pi/2 -float(words[14])}}
-    obj["obj_id"] = ""
-    return obj
-
-
-
-def trans_detection_label(src_label_path, src_calib_path, tgt_label_path):
-    files = os.listdir(src_label_path)
-    files.sort()
-
-    #files = [files[2], files[10]]
-    for fname in files:
-        frame, _ = os.path.splitext(fname)
-        print(frame)
   
-        inv_m = get_detection_inv_matrix(src_calib_path, frame)
-
-        with open(os.path.join(src_label_path, fname)) as f:
-            lines = f.readlines()
-            objs = map(lambda l: parse_one_detection_obj(inv_m, l), lines)
-            filtered_objs = [x for x in objs]#[x for x in filter(lambda obj: obj["obj_type"]!='DontCare', objs)]
-            #print(filtered_objs)
-            with open(os.path.join(tgt_label_path, frame + ".json"), 'w') as outfile:
-                json.dump(filtered_objs, outfile)
+    inv_m = get_inv_matrix(frame)
 
 
-
-
-def parse_one_tracking_obj(inv_matrix, l):
-    words = l.strip().split(" ")
-    obj = {}
-    obj["obj_id"] = words[1]
-    frame = words[0]
-
-    #shift words
-    words = words[2:]
-
-    pos = np.array([float(words[11]), float(words[12]), float(words[13]), 1]).T
-    trans_pos = np.matmul(inv_matrix, pos)
-    #print(trans_pos)
-
-    obj["obj_type"] = words[0]
-    
-    obj["psr"] = {"scale": 
-                {"z":float(words[8]),    #height
-                    "x":float(words[10]),  #length
-                    "y":float(words[9])},  #width
-                    "position": {"x":trans_pos[0], "y":trans_pos[1], "z":trans_pos[2]+float(words[8])/2},
-                    "rotation": {"x":0, 
-                                "y":0,
-                                #"z": +math.pi/2 +float(words[14])}}
-                                "z": -math.pi/2 -float(words[14])}}
-    
-    return frame,obj
-
-
-def trans_tracking_label(src_label_path, src_calib_path, tgt_label_path):
-
-    inv_m = get_tracking_inv_matrix(src_calib_path)
-
-    frame_obj_map = {}
-
-    with open(src_label_path) as f:
+    with open(os.path.join(label_path, fname)) as f:
         lines = f.readlines()
+        def parse_one_obj(l):
+            words = l.strip().split(" ")
+            obj = {}
 
-        for l in lines:
-            frame, obj = parse_one_tracking_obj(inv_m, l)
+            pos = np.array([float(words[11]), float(words[12]), float(words[13]), 1]).T
+            trans_pos = np.matmul(inv_m, pos)
+            #print(trans_pos)
 
-            if obj["obj_type"] != 'DontCare':
-                if frame_obj_map.get(frame):
-                    frame_obj_map[frame].append(obj)
-                else:
-                    frame_obj_map[frame] = [obj]
+            obj["obj_type"] = words[0]
+            obj["psr"] = {"scale": 
+                           {"z":float(words[8]),    #height
+                             "x":float(words[10]),  #length
+                             "y":float(words[9])},  #width
+                            "position": {"x":trans_pos[0], "y":trans_pos[1], "z":trans_pos[2]+float(words[8])/2},
+                            "rotation": {"x":0, 
+                                         "y":0,
+                                         "z": -math.pi/2 -float(words[14])}}
+            obj["obj_id"] = ""
+            return obj
+ 
+        objs = map(parse_one_obj, lines)
+        filtered_objs = [x for x in objs]#[x for x in filter(lambda obj: obj["obj_type"]!='DontCare', objs)]
+        #print(filtered_objs)
 
-
-        for f in frame_obj_map:
-            frame = "{:06d}".format(int(f))
-            with open(os.path.join(tgt_label_path, frame + ".json"), 'w') as outfile:
-                json.dump(frame_obj_map[f], outfile)
-
-
-if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        print("args: <detection|tracking> src_label_path src_calib_path tgt_label_path")
-    else:
-        label_type = sys.argv[1]
-        src_label = sys.argv[2]
-        src_calib = sys.argv[3]
-        tgt_label = sys.argv[4]
-
-
-        if label_type == "detection":
-            trans_detection_label(src_label, src_calib, tgt_label)
-        elif label_type == "tracking":
-            trans_tracking_label(src_label, src_calib, tgt_label)
-        else:
-            print("args: <detection|tracking> src_label_path src_calib_path tgt_label_path")
-
+        with open(os.path.join(my_label_path, frame + ".json"), 'w') as outfile:
+            json.dump(filtered_objs, outfile)

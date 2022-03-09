@@ -84,7 +84,7 @@ PCDLoader.prototype = {
 		var position = [];
 		var normal = [];
 		var color = [];
-		var intensity = [];
+
 		//kitti format, xyzi
 		var offset = 0;
 
@@ -92,14 +92,12 @@ PCDLoader.prototype = {
 			position.push( dataview.getFloat32( row*16 + 0, this.littleEndian ) );
 			position.push( dataview.getFloat32( row*16 + 4, this.littleEndian ) );
 			position.push( dataview.getFloat32( row*16 + 8, this.littleEndian ) );
-			intensity.push(dataview.getFloat32( row*16 + 12, this.littleEndian ) )
 		}
 
 		return {
 			position: position,
 			color: color,
 			normal: normal,
-			intensity: intensity,
 		};
 	},
 
@@ -193,7 +191,7 @@ PCDLoader.prototype = {
 
 			for ( var i = 0, l = PCDheader.fields.length; i < l; i ++ ) {
 
-				if ( PCDheader.data === 'ascii' || PCDheader.data === 'ascill') {
+				if ( PCDheader.data === 'ascii' ) {
 
 					PCDheader.offset[ PCDheader.fields[ i ] ] = i;
 
@@ -225,36 +223,14 @@ PCDLoader.prototype = {
 		var position = [];
 		var normal = [];
 		var color = [];
-		var velocity = [];
-		var intensity = [];
 
 		// ascii
 
-		function filterPoint(x,y,z)
-		{
-			if (isNaN(x))
-				return true;
-			if (x == 0 && y== 0 && z==0)
-				return true;
-			// if (z >=2)
-			// 	return true;
-		}
-
-
-		if ( PCDheader.data === 'ascii' || PCDheader.data === 'ascill') {
+		if ( PCDheader.data === 'ascii' ) {
 
 			var offset = PCDheader.offset;
 			var pcdData = textData.substr( PCDheader.headerLen );
 			var lines = pcdData.split( '\n' );
-
-			var intensity_index = PCDheader.fields.findIndex(n=>n==="intensity");
-			var intensity_type = "F";
-			var intensity_size = 4;
-
-			if (intensity_index >= 0){
-				intensity_type = PCDheader.type[intensity_index];
-				intensity_size = PCDheader.size[intensity_index];
-			}
 
 			for ( var i = 0, l = lines.length; i < l; i ++ ) {
 
@@ -267,10 +243,6 @@ PCDLoader.prototype = {
 					x = parseFloat( line[ offset.x ] );
 					y = parseFloat( line[ offset.y ] );
 					z = parseFloat( line[ offset.z ] );
-
-					if (filterPoint(x,y,z)){
-						continue;
-					}
 
 					position.push( x );
 					position.push( y );
@@ -296,11 +268,6 @@ PCDLoader.prototype = {
 
 				}
 
-
-				if (offset.intensity !== undefined) {
-					intensity.push( parseInt( line[ offset.intensity ] ));
-				}
-
 			}
 
 		}
@@ -319,30 +286,13 @@ PCDLoader.prototype = {
 			var dataview = new DataView( data, PCDheader.headerLen );
 			var offset = PCDheader.offset;
 
-			var intensity_index = PCDheader.fields.findIndex(n=>n==="intensity");
-			var intensity_type = "F";
-			var intensity_size = 4;
-
-			if (intensity_index >= 0){
-				intensity_type = PCDheader.type[intensity_index];
-				intensity_size = PCDheader.size[intensity_index];
-			}
-
-
 			for ( var i = 0, row = 0; i < PCDheader.points; i ++, row += PCDheader.rowSize ) {
 
 				if ( offset.x !== undefined ) {
-					let x = dataview.getFloat32( row + offset.x, this.littleEndian );
-					let y = dataview.getFloat32( row + offset.y, this.littleEndian );
-					let z = dataview.getFloat32( row + offset.z, this.littleEndian );
 
-					if (filterPoint(x,y,z)){
-						continue;
-					}
-
-					position.push( x );
-					position.push( y );
-					position.push( z );
+					position.push( dataview.getFloat32( row + offset.x, this.littleEndian ) );
+					position.push( dataview.getFloat32( row + offset.y, this.littleEndian ) );
+					position.push( dataview.getFloat32( row + offset.z, this.littleEndian ) );
 
 				}
 
@@ -362,20 +312,6 @@ PCDLoader.prototype = {
 
 				}
 
-				if ( offset.vx !== undefined ) {
-					velocity.push( dataview.getFloat32( row + offset.vx, this.littleEndian ) );
-					velocity.push( dataview.getFloat32( row + offset.vy, this.littleEndian ) );
-					velocity.push( 0 );
-				}
-
-				if (offset.intensity !== undefined) {
-					if (intensity_type == "U" && intensity_size == 1){
-						intensity.push( dataview.getUint8(row + offset.intensity));
-					}
-					else if (intensity_type == "F" && intensity_size == 4){
-						intensity.push( dataview.getFloat32(row + offset.intensity, this.littleEndian));
-					}
-				}
 			}
 
 		}
@@ -384,8 +320,6 @@ PCDLoader.prototype = {
 			position: position,
 			color: color,
 			normal: normal,
-			velocity: velocity,
-			intensity: intensity,
 		};
 		
 	}

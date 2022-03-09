@@ -22,7 +22,7 @@ def sample_one_obj(points, num):
         np.random.shuffle(idx)
         return points[idx[0:num]]
 
-def predict_yaw(points):
+def predict(points):
     points = np.array(points).reshape((-1,3))
     input_data = np.stack([x for x in map(lambda x: sample_one_obj(points, NUM_POINT), range(RESAMPLE_NUM))], axis=0)
     pred_val = model.predict(input_data)
@@ -36,8 +36,8 @@ def predict_yaw(points):
     return ret
 
 # warmup the model
-predict_yaw(np.random.random([1000,3]))
+predict(np.random.random([1000,3]))
 
 
 if __name__ == "__main__":
-    predict_yaw(np.random.random([1000,3]))
+    predict(np.random.random([1000,3]))

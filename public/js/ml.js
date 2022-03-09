@@ -1,97 +1,6 @@
 
-
-import { logger } from "./log.js";
+import {data} from './data.js'
 import {matmul, euler_angle_to_rotate_matrix_3by3, transpose, matmul2} from "./util.js"
-const annMath = {
-
-    sub: function(a,b){    //pos, rot, scale
-        
-        let c = [];
-        for (let i in a)
-        {
-            c[i] = a[i] - b[i];
-        }
-
-        return this.norm(c);
-    },
-
-    div: function(a, d){  // d is scalar
-        let c = [];
-        for (let i in a)
-        {
-            c[i] = a[i]/d;
-        }
-
-        return c;
-    },
-
-    add: function(a, b){
-        let c = [];
-        for (let i in a)
-        {
-            c[i] = a[i] + b[i];
-        }
-
-        
-        return this.norm(c);
-    },
-
-    mul: function(a, d)  // d is scalar
-    {
-        let c = [];
-        for (let i in a)
-        {
-            c[i] = a[i]*d;
-        }
-
-        return this.norm(c);
-    },
-
-    norm: function(c)
-    {
-        for (let i = 3; i< 6; i++)
-        {
-            if (c[i] > Math.PI)
-            {
-                c[i] -= Math.PI * 2;
-            }
-            else if (c[i] < - Math.PI)
-            {
-                c[i] += Math.PI * 2;
-            }
-        }
-
-        return c;
-    },
-
-    normAngle: function (a){
-        if (a > Math.PI)
-        {
-            return a - Math.PI * 2;
-        }
-        else if (a < - Math.PI)
-        {
-            return a + Math.PI * 2;
-        }
-        
-        return a;
-    },
-
-    eleMul: function(a,b) //element-wise multiplication
-    {
-        let c = [];
-        for (let i in a)
-        {
-            c[i] = a[i] * b[i];
-        }
-
-        
-        return c;
-    }
-
-};
-
-
 
 var ml = {
     backend: tf.getBackend(),
@@ -150,17 +59,17 @@ var ml = {
        
 
         data.world.add_line(mean, [-normal_v[0]*10, -normal_v[1]*10, normal_v[2]*10]);
-        data.world.lidar.reset_points(points_array);
+        data.world.reset_points(points_array);
         /*
 
         var trans_matrix = transpose(euler_angle_to_rotate_matrix_3by3({x:Math.atan2(normal_v[1], -1), y: 0, z: 0}));
 
         var transfromed_point_array = matmul(trans_matrix, points_array, 3);
 
-        data.world.lidar.reset_points(transfromed_point_array);
+        data.world.reset_points(transfromed_point_array);
         
-        //data.world.lidar.set_spec_points_color(center_point_indices, {x:1,y:0,z:0});
-        //data.world.lidar.update_points_color();
+        //data.world.set_spec_points_color(center_point_indices, {x:1,y:0,z:0});
+        //data.world.update_points_color();
         */
 
         
@@ -261,298 +170,29 @@ var ml = {
     }
     ,
 
-    // predict_rotation_cb: function(data, callback){
-    //     var xhr = new XMLHttpRequest();
-    //     // we defined the xhr
-        
-    //     xhr.onreadystatechange = function () {
-    //         if (this.readyState != 4) 
-    //             return;
-        
-    //         if (this.status == 200) {
-    //             var ret = JSON.parse(this.responseText);
-    //             console.log(ret);
-    //             callback(ret.angle);
-    //         }
-    //         else{
-    //             console.log(this);
-    //         }
-
-    //     };
-        
-    //     xhr.open('POST', "/predict_rotation", true);
-    //     xhr.send(JSON.stringify({"points": data}));
-    // },
-
-    predict_rotation: function(data){
-        const req = new Request("/predict_rotation");
-        let init = {
-            method: 'POST',
-            body: JSON.stringify({"points": data})
-          };
+    predict_rotation: function(data, callback){
+        var xhr = new XMLHttpRequest();
         // we defined the xhr
-        console.log("start predict rotatoin.", data.length, 'points')
-
-        return fetch(req, init)
-        .then(response=>{
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }else{
-                console.log("predict rotatoin response received.")
-                return response.json();
-            }
-        })        
-        .catch(reject=>{
-            console.log("error predicting yaw angle!");            
-        });
         
-    },
-
-    // autoadj is async
-    interpolate_annotation: async function(anns, autoAdj, onFinishOneBox){
+        xhr.onreadystatechange = function () {
+            if (this.readyState != 4) 
+                return;
         
-        let i = 0;
-        while(true){
-            while (i+1 < anns.length && !(anns[i] && !anns[i+1])){
-                i++;
+            if (this.status == 200) {
+                var ret = JSON.parse(this.responseText);
+                console.log(ret);
+                callback(ret.angle);
+            }
+            else{
+                console.log(this);
             }
 
-            let start = i;
-            i+=2;
-
-            while (i < anns.length && !anns[i]){
-                i++;
-            }
-            
-            if (i < anns.length){
-                let end = i;
-                // insert (begin, end)
-                let interpolate_step = annMath.div(annMath.sub(anns[end], anns[start]), (end-start));
-
-                for (let inserti=start+1; inserti<end; inserti++){
-                    let tempAnn = annMath.add(anns[inserti-1], interpolate_step);
-
-                    if (autoAdj) 
-                    {
-                        try
-                        {
-                            let adjustedAnn = await autoAdj(inserti, tempAnn);
-
-
-                            let adjustedYaw = annMath.normAngle(adjustedAnn[5] - tempAnn[5]);
-
-                            if (Math.abs(adjustedYaw) > Math.PI/2)
-                            {
-                                console.log("adjust angle by Math.PI.");
-                                adjustedAnn[5] = annMath.normAngle(adjustedAnn[5] + Math.PI);
-                            }
-                            
-                            if (!pointsGlobalConfig.enableAutoRotateXY)
-                            {
-                                // adjustedAnn[3] = tempAnn[3];
-                                // adjustedAnn[4] = tempAnn[4];
-                                adjustedAnn[3] = 0;
-                                adjustedAnn[4] = 0;
-
-                            }
-                        
-                            tempAnn = adjustedAnn;
-                        }
-                        catch (e)
-                        {
-                            console.log(e);
-                        }
-                        // 
-                    }
-                        
-                    anns[inserti] = tempAnn;
-
-                    // adjust step since we have finished annotate one more box.
-                    interpolate_step = annMath.div(annMath.sub(anns[end], anns[inserti]), (end-inserti));
-
-                    if (onFinishOneBox)
-                        onFinishOneBox(inserti);
-                }
-            }else{
-                break;
-            }
-        }
-
-        // interpolate finished
-
+        };
         
-        //forward
-        i = 0;
-        while (i < anns.length && !anns[i])
-            i++;
-        
-        if (i < anns.length){
-            let filter = new MaFilter(anns[i]);
-            i++;
-
-            while (i < anns.length && anns[i]){
-                filter.update(anns[i]);
-                i++;
-            }
-
-            while (i < anns.length && !anns[i]){
-                let tempAnn = filter.predict();
-
-                if (autoAdj){
-                    try {
-                        let adjustedAnn = await autoAdj(i, tempAnn);
-
-                        let adjustedYaw = annMath.normAngle(adjustedAnn[5] - tempAnn[5]);
-
-                        if (Math.abs(adjustedYaw) > Math.PI/2)
-                        {
-                            console.log("adjust angle by Math.PI.");
-                            adjustedAnn[5] = annMath.normAngle(adjustedAnn[5] + Math.PI);
-                        }
-
-                        tempAnn = adjustedAnn;
-
-                        filter.update(tempAnn);    
-                    } catch (error) {
-                        console.log(error);
-                        filter.nextStep(tempAnn);
-                    }
-                    
-                }
-                else{
-                    filter.nextStep(tempAnn);
-                }
-
-                anns[i] = tempAnn;
-                // we should update 
-                if (onFinishOneBox)
-                    onFinishOneBox(i);
-
-                i++;
-            }
-        }
-        // now extrapolate
-        
-        //backward
-        i = anns.length-1;
-        while (i >= 0 && !anns[i])
-            i--;
-        
-        if (i >= 0){
-            let filter = new MaFilter(anns[i]);
-            i--;
-
-            while (i >= 0 && anns[i]){
-                filter.update(anns[i]);
-                i--;
-            }
-
-            while (i >= 0 && !anns[i]){
-                let tempAnn = filter.predict();
-                if (autoAdj){
-                    let adjustedAnn = await autoAdj(i, tempAnn).catch(e=>{
-                        logger.log(e);
-                        return tempAnn;
-                    });
-
-                    let adjustedYaw = annMath.normAngle(adjustedAnn[5] - tempAnn[5]);
-
-                    if (Math.abs(adjustedYaw) > Math.PI/2)
-                    {
-                        console.log("adjust angle by Math.PI.");
-                        adjustedAnn[5] = annMath.normAngle(adjustedAnn[5] + Math.PI);
-                    }
-
-                    tempAnn = adjustedAnn;
-
-
-                    filter.update(tempAnn);
-                }
-                else{
-                    filter.nextStep(tempAnn);
-                }
-
-                anns[i] = tempAnn;
-                if (onFinishOneBox)
-                    onFinishOneBox(i);
-                i--;
-            }
-        }
-
-        return anns;
-    },
-
-    
+        xhr.open('POST', "/predict_rotation", true);
+        xhr.send(JSON.stringify({"points": data}));
+    }
 }
 
 
-function MaFilter_tf(initX){   // moving average filter
-    this.x = tf.tensor1d(initX);  // pose
-    this.step = 0;
-    
-    this.v = tf.zeros([9]);  // velocity
-    this.decay = tf.tensor1d([0.7, 0.7, 0.7, 
-                              0.7, 0.7, 0.7,
-                              0.7, 0.7, 0.7])
-
-    this.update = function(x){
-        if (this.step == 0){
-            this.v = tf.sub(x, this.x);
-        } else {
-            this.v = tf.add(tf.mul(tf.sub(x, this.x), this.decay),
-                            tf.mul(this.v, tf.sub(1, this.decay)));
-        }
-
-        this.x = x;
-        this.step++;
-    };
-
-    this.predict = function(){
-        let pred = tf.concat([tf.add(this.x, this.v).slice(0,6), this.x.slice(6)]);
-        return pred.dataSync();
-    };
-
-    this.nextStep = function(x){
-        this.x = x;
-        this.step++;
-    };
-
-}
-
-
-
-function MaFilter(initX){   // moving average filter
-    this.x = initX;  // pose
-    this.step = 0;
-    
-    this.v = [0,0,0, 0,0,0, 0,0,0];  // velocity
-    this.ones = [1,1,1, 1,1,1, 1,1,1];
-    this.decay = [0.5, 0.5, 0.5, 
-                  0.5, 0.5, 0.5,
-                  0.5, 0.5, 0.5];
-
-    this.update = function(x){
-        if (this.step == 0){
-            this.v = annMath.sub(x, this.x);
-        } else {
-            this.v = annMath.add(annMath.eleMul(annMath.sub(x, this.x), this.decay),
-                                 annMath.eleMul(this.v, annMath.sub(this.ones, this.decay)));
-        }
-
-        this.x = x;
-        this.step++;
-    };
-
-    this.predict = function(){
-        let pred = [...annMath.add(this.x, this.v).slice(0,6), ...this.x.slice(6)];
-        return pred;
-    };
-
-    this.nextStep = function(x){
-        this.x = x;
-        this.step++;
-    };
-
-}
-
-export {ml, MaFilter};
+export {ml};
