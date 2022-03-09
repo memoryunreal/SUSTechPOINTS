@@ -769,7 +769,7 @@ var TransformControlsGizmo = function () {
 		depthTest: false,
 		depthWrite: false,
 		transparent: true,
-		linewidth: 10,
+		linewidth: 1,
 		fog: false
 	} );
 

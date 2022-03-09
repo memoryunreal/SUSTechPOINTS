@@ -9,7 +9,7 @@ var views = [
         bottom: 0,
         width: 1.0,
         height: 1.0,
-        background: new THREE.Color( "rgb(255, 255, 255)" ), //background: new THREE.Color( 0.0, 0.0, 0.0 ),
+        background: new THREE.Color( 0.0, 0.0, 0.0 ),
         zoom_ratio: 1.0, //useless for mainview
     },
     {
@@ -17,7 +17,7 @@ var views = [
         bottom: 0.7,
         width: 0.2,
         height: 0.3,
-        background: new THREE.Color( "rgb(255, 255, 255)" ),
+        background: new THREE.Color( 0.1, 0.1, 0.2 ),
         zoom_ratio: 1.0,
     },
     {
@@ -25,7 +25,7 @@ var views = [
         bottom: 0.5,
         width: 0.2,
         height: 0.2,
-        background: new THREE.Color("rgb(255, 255, 255)" ),
+        background: new THREE.Color( 0.1, 0.2, 0.1 ),
         zoom_ratio: 1.0,
     },
 
@@ -34,7 +34,7 @@ var views = [
         bottom: 0.3,
         width: 0.2,
         height: 0.2,
-        background: new THREE.Color( "rgb(255, 255, 255)" ),
+        background: new THREE.Color( 0.2, 0.1, 0.1 ),
         zoom_ratio: 1.0,
     }
 ];

@@ -22,7 +22,7 @@ var data = {
     //     if (this.world)
     //         this.world.points.material.size = this.config.point_size;
     // },
-// --debug point_size
+
     config: {
         point_size: 1,
         point_brightness: 0.6,
@@ -1432,9 +1432,8 @@ var data = {
                     color = 0x00ff00;
                 }
 
-                // -- debug line
-                // var material = new THREE.LineBasicMaterial( { color: color, linewidth: 20, opacity: this.data.config.box_opacity, transparent: true } );
-                var material = new THREE.LineMaterial( { color: color, linewidth: 20, opacity: this.data.config.box_opacity, transparent: true } );
+              
+                var material = new THREE.LineBasicMaterial( { color: color, linewidth: 1, opacity: this.data.config.box_opacity, transparent: true } );
                 return new THREE.LineSegments( line, material );                
             },
 
@@ -1486,11 +1485,8 @@ var data = {
                 linewidth is 1, regardless of set value.
                 */
 
-                // -- debug line
-                var material = new THREE.LineBasicMaterial( { color: color, linewidth: 20, opacity: this.data.config.box_opacity, transparent: true } );
-
-                //var material = new THREE.LineMaterial( { color: color, linewidth: 20, opacity: this.data.config.box_opacity, transparent: true } );
                 
+                var material = new THREE.LineBasicMaterial( { color: color, linewidth: 1, opacity: this.data.config.box_opacity, transparent: true } );
                 var box = new THREE.LineSegments( bbox, material );
                 
                 box.scale.x=1.8;

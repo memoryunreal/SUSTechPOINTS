@@ -1,6 +1,6 @@
 body {
 	margin: 0;
-	background-color: rgb(187, 37, 37);
+	background-color: #000;
 	color: #fff;
 	/*font-family: Monospace;*/
 	font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
@@ -76,7 +76,7 @@ canvas {
 	padding: 0px;
 
 	stroke: #00ff0088;
-	stroke-width: 20px;
+	stroke-width: 2px;
 	fill: #00ff0022;
 }
 
@@ -88,7 +88,6 @@ dynamic set obj-type css has higher priority than this one.
 .box-svg-selected{
 	stroke: #ff00ff88;
 	fill: #ff00ff22;
-	stroke-width: 10px;
 }
 
 .maincanvas-line{
@@ -144,7 +143,7 @@ dynamic set obj-type css has higher priority than this one.
 #obj-editor{
 	position: absolute;
 	color: #ff00ff;
-	background-color: rgb(236, 227, 227);
+	background-color: #222;
 	font-size: inherit;
 	padding: 0px;
 	box-sizing: border-box;
@@ -216,7 +215,7 @@ dynamic set obj-type css has higher priority than this one.
 	position: absolute;	
 	padding-left: 3px;
 	width: 120px;
-	background-color: rgb(218, 150, 150);
+	background-color: #222;
 }
 .menu-item {
 	cursor: pointer;
@@ -234,7 +233,7 @@ dynamic set obj-type css has higher priority than this one.
 
 .menu-seperator {
 	padding: 0.5px;
-	background-color: rgb(226, 202, 202);
+	background-color: #333;
 }
 
 .dg.ac {
@@ -287,7 +286,7 @@ dynamic set obj-type css has higher priority than this one.
 	left: 0%;
 	width: 20%;
 	height: 30%;
-	background-color: #eb212100;
+	background-color: #00000000;
 	border-width: 0px;	
 }
 
@@ -297,7 +296,7 @@ dynamic set obj-type css has higher priority than this one.
 	left: 0%;
 	width: 20%;
 	height: 20%;
-	background-color: #ee6a6a00;
+	background-color: #00000000;
 	border-width: 0px;		
 }
 
@@ -308,7 +307,7 @@ dynamic set obj-type css has higher priority than this one.
 	left: 0%;
 	width: 20%;
 	height: 20%;
-	background-color: #ca1d1d00;
+	background-color: #00000000;
 	border-width: 0px;
 }
 
@@ -379,7 +378,7 @@ td {
 	position: absolute;
 	bottom: 0%;
 	right: 0%;
-	background-color: rgb(209, 111, 111);
+	background-color: #222;
 	margin: 1px;
 }
 #select-box {

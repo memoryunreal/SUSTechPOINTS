@@ -1,41 +1,27 @@
 # SUSTechPOINTS: Point Cloud 3D Bounding Box Annotation Tool
 
-### Main UI
-![screenshot](./doc/main-ui.png)
-
-### Automatic yaw angle (z-axis) prediction.
+![screenshot](./doc/pcd_label.png)
+## News
+2020.4.2  automatic yaw angle (z-axis) prediction.
 ![auto-rotate](./doc/auto-rotate.gif)
 
-### batch-mode box editing
-
-automatically annotate a car
-
-![batch-mode](./doc/auto-anno-car.gif)
-
-
-automatically annotate a scooter-rider
-
-![batch-mode](./doc/auto-anno-rider.gif)
-
-automatically annotate a pedestrian
-
-![batch-mode](./doc/auto-anno-pedestrian.gif)
+## Note
+This project is still under heavy development, some features/algorithms need packages which are not uploaded yet, we will upload them soon.
 
 ## Features
 
-- Batch-mode editing
-- Automatic object rotation
 - 9 DoF box editing
-- Editing on perspective view and projective views
-- Multiple camera images as context, with auto-camera-switching
-- Camera-LiDAR fusion
-- Binary/ascii pcd files
-- Jpg/png image files
-- Objects/boxes color by category
-- Focus mode to hide background to check details easily
-- Stream play/stop
-- Auto object tracking id generation
-- Interactive box fitting
+- editing on perspective view and projective views
+- multiple camera images as context, with auto-camera-switching
+- camera-LiDAR fusion
+- binary/ascii pcd files
+- jpg/png image files
+- semi-auto box annotation (need extra package)
+- objects/boxes color by category
+- focus mode to hide background to check details easily
+- stream play/stop
+- auto object tracking id generation
+- interactive box fitting
 
 
 
@@ -44,52 +30,19 @@ automatically annotate a pedestrian
 python, cherrypy, tensorflow>=2.1
 
 ## Install
-
-### Manual
-1. Install packages
+1. install packages
      ```
      pip install -r requirement.txt
      ```
-1. Download model
+1. download models 
 
      download pretrained model file [deep_annotation_inference.h5](https://github.com/naurril/SUSTechPOINTS/releases/download/0.1/deep_annotation_inference.h5), put it into `./algos/models`
      ```
-     wget https://github.com/naurril/SUSTechPOINTS/releases/download/0.1/deep_annotation_inference.h5  -P algos/models
+     wget https://github.com/naurril/SUSTechPOINTS/releases/download/0.1/deep_annotation_inference.h5  -p algos/models
      ```
-### Docker
-
-#### Install Docker(安装Docker)
-
-```
-sudo apt install -y docker docker.io docker-registry
-```
-
-#### Build Image yourself(自行创建镜像, 较为繁琐)
-```
-cd Docker
-
-# Build docker image (构建镜像)
-
-sudo docker build -t sustechpoints:v1.0.0 .
-
-# Create container of server ,Please replace ${YourDataPath} with the path where you put data on (创建容器, 请将用你的数据存储路径将变量${YourDataPath}替换, 注意数据要符合data/example中的组织方式)
-
-sudo docker run -it -d --restart=always --name STPointsSServer -p 8081:8081 -v ${YourDataPath}:/root/SUSTechPOINTS/data sustechpoints:v1.0.0 bash
-
-```
-
-#### Use docker image of dockerhub(使用现有镜像, 不保证代码为最新)
-
-```
-sudo docker run -it -d --restart=always -p 8081:8081 juhaoming/sustechpoints:v1.0.0 bash
-
-sudo docker run -it -d --restart=always -p 8081:8081 -v ${YourDataPath}:/root/SUSTechPOINTS/data juhaoming/sustechpoints:v1.0.0 bash
-
-```
-
 
 ## Start
-Run the following command in shell, then go to http://127.0.0.1:8081
+run the following script in shell, then go to http://127.0.0.1:8081
 ```
 python main.py
 ```
@@ -100,37 +53,23 @@ python main.py
 public
    +- data
        +- scene1
-          +- lidar
-               +- 0000.pcd
-               +- 0001.pcd
-          +- camera
-               +- front
-                    +- 0000.jpg
-                    +- 0001.jpg
-               +- left
-                    +- ...
-          +- aux_lidar
-               +- front
-                    +- 0000.pcd
-                    +- 0001.pcd
-          +- radar
-               +- front_points
-                    +- 0000.pcd
-                    +- 0001.pcd
-               +- front_tracks
-                    +- ...
-          +- calib
-               +- camera
-                    +- front.json
-                    +- left.json
-               +- radar
-                    +- front_points.json
-                    +- front_tracks.json
-          +- label
-               +- 0000.json
-               +- 0001.json
+             +- image
+                  +- front
+                       +- 0000.jpg
+                       +- 0001.jpg
+                  +- left
+                       +- ...
+             +- pcd
+                  +- 0000.pcd
+                  +- 0001.pcd
+             +- label
+                  +- 0000.json
+             +- calib
+                  +- front.json
+                  +- left.json
+                  +- ...
        +- scene2
-
+             
 ````
 
 label is the directory to save the annotation result.
@@ -165,9 +104,6 @@ Main View:
      left click on non-box area: hide transform control if present, or unselect box
 
      Ctrl+mouse drag: add a new box
-     Shift+mouse drag: add a new box, w/o automatic box fitting
-
-     Right click to show popup menu.
 
      -/=: adjust point size
 
@@ -180,30 +116,14 @@ Main View:
      del/ctrl+d  remove selected box
 
      1,2  select previous/next box
-     3,4, or pageup/pagedown  show previous/next frame in current scene
+     3,4  show previous/next frame in current scene
      5,6,7  show camera helper box of sideviews.
 
      space: pause/continue stream play
 
-     
-     when a box is selected:
-          t: show object trajectory
-
-          del: delete the box
-          ctrl+d: delete the box
-
-          a,s,d,w,r,f,g: save as operations in top-view.
-
-     when transform control in perspective view is active:
-          z/x/c: toggle x/y/z asix handle
-          v: switch among dimension/rotation/position
-
-
 Side sbu-view (projective view):
 
-     note: 
-     - in perspective view, all keyboard operations are same as operating in top-view
-     - these shortcuts are applicable when a subview is activated by placing the mouse over it.
+     (note: in perspective view, all keyboard operations are same as operating in top-view)
 
      a: move box left
      s: move box down
@@ -214,8 +134,7 @@ Side sbu-view (projective view):
      r: rotate box counterclockwise, with box auto-fitting
      f: rotate box clockwise, with box auto-fitting
      g: reverse heading direction (rotate by PI)
-     
-
+     t: reset box
 
      double click on center: auto-shrink box by adjusting all borders to nearest innner point.
      double click on border: auto-shrink box by adjusting the border to nearest innner point.
@@ -223,22 +142,7 @@ Side sbu-view (projective view):
 
      drag border/corner/center: move border/corner/box.
      ctrl + drag border/corner: move border/corner/box with box auto-fitting
-     Shft + drag border/corner: move border/corner/box with box auto-fitting while keeping the box size
 
-
-
-batch-editing mode:
-     t: show object trajectory
-     3/pageup: prev batch, or prev object (if one batch shows the whole scene)
-     4/pagedown: nex batch, or next object (if one batch shows the whole scene)
-     Escape: exit batch mode
-
-     when context menu shown (underscored char):
-          s: select all
-          a: auto annotate selected frames
-          f: finalize selected frames
-          e: interpolate selected frames
-          d: delete selected frames
 
 ```
 
@@ -246,11 +150,10 @@ batch-editing mode:
 [Deploy uwsgi](./doc/deploy_server.md)
 
 ## Cite
-
 If you find this work useful in your research, please consider cite:
 ```
 @INPROCEEDINGS{9304562,
-  author={Li, E and Wang, Shuaijun and Li, Chengyang and Li, Dachuan and Wu, Xiangbin and Hao, Qi},
+  author={E. {Li} and S. {Wang} and C. {Li} and D. {Li} and X. {Wu} and Q. {Hao}},
   booktitle={2020 IEEE Intelligent Vehicles Symposium (IV)}, 
   title={SUSTech POINTS: A Portable 3D Point Cloud Interactive Annotation Platform System}, 
   year={2020},
@@ -258,5 +161,4 @@ If you find this work useful in your research, please consider cite:
   number={},
   pages={1108-1115},
   doi={10.1109/IV47402.2020.9304562}}
-  
 ```
